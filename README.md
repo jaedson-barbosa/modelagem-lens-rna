@@ -1,0 +1,1 @@
+O objetivo inicial deste trabalho é prever as vazões 1A e 3A usando como parâmetro a frequência e as vazões atuais. Dessa vez tentar fazer isso sem injetar o resultado esperado nas entradas.
