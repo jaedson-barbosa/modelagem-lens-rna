@@ -1,1 +1,2 @@
-O objetivo inicial deste trabalho é prever as vazões 1A e 3A usando como parâmetro a frequência e as vazões atuais. Dessa vez tentar fazer isso sem injetar o resultado esperado nas entradas.
+[ ] Initial objective: Predict the 1A and 3A flows using the frequency and current flows as a parameter.
+[ ] Final objective: Predict 1A and 3A flows using frequency, current flows and valve angle as parameters.
