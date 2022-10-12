@@ -1,5 +1,4 @@
-- [ ] Import data and select relevant columns using PANDAS.
-- [ ] Filter out anomalous data.
-- [ ] Data graphing.
-- [ ] Predict the 1A and 3A flows using the frequency and current flows as a parameter.
+- [x] Import data and select relevant columns using PANDAS.
+- [x] Data graphing.
+- [x] Predict the 1A and 3A flows using the frequency and current flows as a parameter.
 - [ ] Predict 1A and 3A flows using frequency, current flows and valve angle as parameters.

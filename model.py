@@ -2,7 +2,7 @@ import tensorflow as tf
 import numpy as np
 
 
-def train_model(x, y, size, epochs, name):
+def train_model(x, y, input_size, dense_units, epochs, name):
     mse = 'mean_squared_error'
 
     normalization_in = tf.keras.layers.Normalization()
@@ -10,18 +10,19 @@ def train_model(x, y, size, epochs, name):
 
     model = tf.keras.models.Sequential()
     model.add(normalization_in)
-    model.add(tf.keras.layers.Input(3))
-    model.add(tf.keras.layers.Dense(
-        size, activation=tf.keras.activations.relu))
-    model.add(tf.keras.layers.Dense(2, activation=tf.keras.activations.relu))
+    model.add(tf.keras.layers.Input(input_size))
+    activation = tf.keras.activations.relu
+    for units in dense_units:
+        model.add(tf.keras.layers.Dense(units, activation))
+    model.add(tf.keras.layers.Dense(2, activation))
     model.compile(optimizer='adam', loss=mse, metrics=[mse])
     model.fit(x, y, epochs=epochs, verbose=0)
-    model.save(f"./trained_models/{name}.h5")
+    model.save(f"./trained_models/{name}")
 
     return model
 
 def load_model(name):
-    model = tf.keras.models.load_model(f"./trained_models/{name}.h5")
+    model = tf.keras.models.load_model(f"./trained_models/{name}")
     return model
 
 def check_results(x, y, model):
