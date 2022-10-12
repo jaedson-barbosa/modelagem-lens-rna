@@ -34,8 +34,6 @@ def read_excel(path, add_angle):
     if add_angle:
         columns.append('CV_4A_READ')
     df = df[columns]
-    df = df[df['FT_1A'] > 0]
-    df = df[df['FT_3A'] > 0]
     return df
  
 
@@ -61,6 +59,7 @@ def concat_delayed_flows(data):
 
 def pd2dataarray(data, with_angle=False):
     data_array = np.array(data)
+    data_array = data_array[np.min(data_array, axis=1) > 0.0]
     index = 4 if with_angle else 3
     x = data_array[:, 0:index]
     y = data_array[:, index:index+2]
