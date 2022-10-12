@@ -6,7 +6,7 @@ data = read_training_data('0deg')
 data = concat_delayed_flows(data)
 (x, y) = pd2dataarray(data)
 
-model = train_model(x, y, 3, [3], 1000, "initial")
+model = train_model(x, y, 3, [3], 100, "initial")
 (MAPE, MSE, y_pred) = check_results(x, y, model)
 print(f"MAPE: {MAPE}%\nMSE: {MSE}")
 

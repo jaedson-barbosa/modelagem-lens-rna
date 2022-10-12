@@ -7,7 +7,7 @@ data = pd.concat((read_training_data(f, True) for f in files))
 data = concat_delayed_flows(data)
 (x, y) = pd2dataarray(data, True)
 
-model = train_model(x, y, 4, [16, 16], 150, "complete")
+model = train_model(x, y, 4, [4], 100, "complete")
 (MAPE, MSE, y_pred) = check_results(x, y, model)
 print(f"MAPE: {MAPE}%\nMSE: {MSE}")
 

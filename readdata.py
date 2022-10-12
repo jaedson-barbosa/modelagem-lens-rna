@@ -32,7 +32,7 @@ def read_excel(path, add_angle):
     df = df.rename(columns=COLUMNS_RENAMES)
     columns = ['FREQ', 'FT_1A', 'FT_3A']
     if add_angle:
-        columns.append('CV_4A_READ')
+        columns.insert(0, 'CV_4A_READ')
     df = df[columns]
     return df
  
