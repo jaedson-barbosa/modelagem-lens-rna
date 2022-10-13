@@ -1,0 +1,153 @@
+\documentclass[12pt]{article}
+\usepackage[brazilian]{babel}
+\usepackage[bottom=2.0cm,top=2.0cm,left=2.0cm,right=2.0cm]{geometry}
+%\usepackage{fontspec}
+\usepackage{indentfirst}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage[acronym, toc]{glossaries}
+
+%\setmainfont{Times New Roman}
+\linespread{1.25}
+\parindent=1.25cm
+
+\renewcommand{\lstlistingname}{Código}
+\renewcommand{\lstlistlistingname}{Lista de códigos}
+\lstset{
+  language=Python,
+  frame=single,
+  framerule=0pt,
+  framextopmargin=3ex,
+  framexbottommargin=3ex,
+  framexleftmargin=1em,
+  xleftmargin={\dimexpr 1em+3pt}
+}
+
+\hypersetup{colorlinks,citecolor=black,filecolor=black,linkcolor=black,urlcolor=black}
+
+\title{Relatório de modelo do LENS com RNA}
+\author{Jaedson Barbosa Serafim}
+\date{Outubro 2022}
+
+\makeatletter
+\renewcommand*{\fps@figure}{h!}
+\renewcommand*{\fps@table}{h!}
+\makeatother
+
+\makeglossaries
+\newacronym{rna}{RNA}{Rede Neural Artificial}
+\newacronym{mse}{MSE}{Mean Squared Error, ou Erro Quadrático Médio}
+\newacronym{mape}{MAPE}{Mean Absolute Percentage Error, ou Erro Percentual Absoluto Médio}
+
+\begin{document}
+
+\maketitle
+
+\section{Introdução}
+
+O objetivo deste trabalho é o desenvolvimento de uma RNA que preveja as vazões de dois pontos de medição do LENS usando como base a frequência do inversor da bomba e os valores atuais de vazão.
+Neste relatório serão descritos todos os elementos usados para geração das \acrshort{rna}s responsáveis pelas previsões mostradas nas figuras aqui apresentadas.
+
+Todo o código fonte deste projeto está escrito em Python e disponível no repositório do GitHub 
+\href{https://github.com/jaedson-barbosa/modelagem-lens-rna}{jaedson-barbosa/modelagem-lens-rna}.
+
+\section{Dados coletados}
+
+\begin{table}
+\caption{Arquivos fornecidos para testes}
+\centering
+\begin{tabular}{|l|l|} 
+\hline
+Nome & Descrição \\ 
+\hline
+initial & Medições com ângulo fixo em 0 e frequência variável \\ 
+\hline
+complete & Medições com frequência e ângulo variáveis \\
+\hline
+\end{tabular}
+\label{tab:arquivos_testes}
+\end{table}
+
+\begin{table}
+\caption{Arquivos fornecidos para treinamento}
+\centering
+\begin{tabular}{|l|l|} 
+\hline
+Nome & Descrição \\ 
+\hline
+0deg & Medições com ângulo fixo em 0 e frequência variável \\ 
+\hline
+30hz & Medições com frequência fixa em 30 Hz e ângulo variável \\ 
+\hline
+35hz & Medições com frequência fixa em 35 Hz e ângulo variável \\ 
+\hline
+40hz & Medições com frequência fixa em 40 Hz e ângulo variável \\ 
+\hline
+45hz & Medições com frequência fixa em 45 Hz e ângulo variável \\ 
+\hline
+50hz & Medições com frequência fixa em 50 Hz e ângulo variável \\
+\hline
+\end{tabular}
+\label{tab:arquivos_treinamento}
+\end{table}
+
+As tabelas \ref{tab:arquivos_testes} e \ref{tab:arquivos_treinamento} contêm o nome e uma breve descrição de cada um dos arquivos fornecidos para a execução deste trabalho. Vale salientar que os nomes aqui apresentados não são exatamente iguais aos originais enviados pelo professor para fins de encurtamento de código.
+
+A principal diferença entre os arquivos de treinamento e os arquivos de teste é que os valores de frequência e ângulo usados são diferentes, pois enquanto nos arquivos de treinamento foi usado um passo fixo de 5 unidades entre cada atualização da planta, em frequência do inversor ou ângulo da válvula, nos arquivos de teste o passo não teve valor fixo.
+A principal razão desta diferença é que assim a \acrshort{rna} pôde ter sua capacidade de previsão realmente testada, pois é necessária um bom grau de generalização para que os valores que não foram treinados sejam corretamente previstos.
+
+\section{Leitura e preparação de dados}
+
+\lstinputlisting[label=code:importacao, caption={Importação de bibliotecas Pandas e NumPy}, firstline=1, lastline=2]{readdata.py}
+
+Para a leitura e processamento de dados foram escolhidas as bibliotecas Pandas e NumPy, importadas como mostrado no código \ref{code:importacao}, por serem as opções mais populares para tal tarefa.
+
+\lstinputlisting[label=code:renomeacoes, caption={Renomeações de colunas}, firstline=4, lastline=27]{readdata.py}
+
+Para facilitar a leitura do código, os nomes inválidos de colunas dos arquivos XLSX fornecidos foram renomeados segundo o objeto definido no trecho de código \ref{code:renomeacoes}.
+
+\lstinputlisting[label=code:leitura, caption={Funções de leitura de arquivos}, firstline=30, lastline=49]{readdata.py}
+
+Para a leitura dos dados foram definidas as funções \textit{read\_training\_data} e \textit{read\_test\_data}, que servem apenas para apontar o caminho correto de arquivo para a função \textit{read\_excel} de acordo com o tipo de dado desejado, se é de treinamento ou de teste, como mostrado em \ref{code:leitura}.
+
+Todas as funções possuem um parâmetro opcional \textit{add\_angle}, responsável por definir se o conjunto de dados em questão deve conter a informação de ângulo da válvula. A utilidade deste parâmetro será melhor entendida em seções posteriores, quando essa flexibilidade será requisitada.
+
+\lstinputlisting[label=code:delay, caption={Função de adição de vazões atrasadas}, firstline=52, lastline=57]{readdata.py}
+
+Todos os modelos treinados têm como parâmetro a vazão atual para poderem prever a próxima vazão, por isso a necessidade da função \textit{concat\_delayed\_flows} mostrada em \ref{code:delay}, responsável pela adição dessas vazões atrasadas.
+
+\lstinputlisting[label=code:conversao, caption={Função de conversão e filtragem de dados}, firstline=60, lastline=66]{readdata.py}
+
+Por fim, o código \ref{code:conversao} contêm a função responsável pela conversão do \textit{DataFrame} do Pandas para um vetor do NumPy, dividir a matriz entre entrada e saída e remover todos os erros dos sensores, ou seja, todas as vazões iguais ou menores que zero.
+Novamente aqui existe o parâmetro \textit{with\_angle}, que deve ser igual àquele usado nas funções anteriores.
+
+\section{Treinamento e checagem de modelo}
+
+\lstinputlisting[label=code:importacao2, caption={Importação de bibliotecas TensorFlow e NumPy}, firstline=1, lastline=2]{model.py}
+
+Novamente nesta seção é necessário usar funções da biblioteca Numpy, porém , como mostrado em \ref{code:importacao2}, aqui também é importada a biblioteca TensorFlow, responsável por todas as tarefas relacionadas ao treinamento e uso da \acrshort{rna}.
+
+\lstinputlisting[label=code:treinamento, caption={Função de treinamento}, firstline=5, lastline=22]{model.py}
+
+O código \ref{code:treinamento} mostra a função de treinamento, que tem como entradas: \textit{x} (entradas da \acrshort{rna}), \textit{y} (saídas esperadas da \acrshort{rna}), \textit{size} (número de variáveis de entrada), \textit{dense\_units} (vetor com quantidade de neurônios em cada camada oculta), \textit{epochs} (número de épocas usadas no treinamento) e \textit{name} (nome do modelo, será usado no arquivo gerado).
+
+% MELHORAR
+
+\lstinputlisting[label=code:load, caption={Função de carregamento de \acrshort{rna} já treinada}, firstline=24, lastline=26]{model.py}
+
+Gerar uma boa \acrshort{rna} não é uma tarefa fácil, por isso é necessário ter a capacidade de recuperar todas as redes geradas, tarefa essa desempenhada pela função mostrada no código \ref{code:load}.
+
+\lstinputlisting[label=code:check, caption={Função de checagem de \acrshort{rna}}, firstline=28, lastline=33]{model.py}
+
+São usados como parâmetros de validação da rede neural o \acrfull{mse} e o \acrfull{mape}, cujo cálculo é feito pela função exibida em \ref{code:check}. Além dos dois parâmetros citados anteriormente, também é retornado por esta função os valores previstos para que possam ser exibidos como descrito na seção \ref{sec:exibicao}.
+
+\section{Exibição de resultados}
+\label{sec:exibicao}
+
+
+
+\section {Primeiro modelo}
+
+Inicialmente foi feita a coleta de dados com frequência do inversor fixa em 30 Hz, ou seja, a variação de vazões era provocada unicamente por causa do ângulo de uma das válvulas da planta.
+
+\end{document}
