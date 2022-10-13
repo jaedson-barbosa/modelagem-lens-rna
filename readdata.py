@@ -35,7 +35,7 @@ def read_excel(path, add_angle):
         columns.insert(0, 'CV_4A_READ')
     df = df[columns]
     return df
- 
+
 
 def read_training_data(name, add_angle=False):
     path = f"./training_data/{name}.xlsx"
